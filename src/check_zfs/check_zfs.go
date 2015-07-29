@@ -3,16 +3,15 @@ package main
 import (
 	"errors"
 	"fmt"
+	"log"
+	"os/exec"
 	"strconv"
 	"strings"
 )
 
 const (
-	VERSION = "0.0.1"
+	VERSION = "0.0.2"
 )
-
-// zpool list -H -o name,cap %s
-// zpool list -H -o health %s
 
 type zpool struct {
 	name     string
@@ -22,6 +21,7 @@ type zpool struct {
 }
 
 func checkHealth(z *zpool, output string) (err error) {
+	output = strings.Trim(output, "\n")
 	if output == "ONLINE" {
 		z.healthy = true
 	} else if output == "DEGRADED" || output == "FAULTED" {
@@ -62,10 +62,34 @@ func getFaulted(z *zpool, output string) (err error) {
 	return
 }
 
-func runZpoolCommand() {
-
+func runZpoolCommand(args []string) string {
+	zpool_path, err := exec.LookPath("zpool")
+	if err != nil {
+		log.Fatal("Could not find zpool in PATH")
+	}
+	cmd := exec.Command(zpool_path, args...)
+	out, _ := cmd.CombinedOutput()
+	return fmt.Sprintf("%s", out)
 }
 
 func main() {
-	fmt.Printf("Hello from check_zfs v%s\n", VERSION)
+	z := zpool{name: "zones"}
+	output := runZpoolCommand([]string{"status", z.name})
+	err := getFaulted(&z, output)
+	if err != nil {
+		log.Fatal("Error parsing zpool status")
+	}
+
+	output = runZpoolCommand([]string{"list", "-H", "-o", "health", z.name})
+	err = checkHealth(&z, output)
+	if err != nil {
+		log.Fatal("Error parsing zpool list -H -o health ", z.name)
+	}
+
+	output = runZpoolCommand([]string{"list", "-H", "-o", "cap", z.name})
+	err = getCapacity(&z, output)
+	if err != nil {
+		log.Fatal("Error parsing zpool capacity")
+	}
+	fmt.Println(z)
 }
