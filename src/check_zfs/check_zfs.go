@@ -85,6 +85,14 @@ func getFaulted(z *zpool, output string) (err error) {
 	return
 }
 
+func checkExistance(pool string) (err error) {
+	output := runZpoolCommand([]string{"list", pool})
+	if strings.Contains(fmt.Sprintf("%s", output), "no such pool") {
+		err = errors.New("No such pool")
+	}
+	return
+}
+
 func runZpoolCommand(args []string) string {
 	zpool_path, err := exec.LookPath("zpool")
 	if err != nil {
@@ -114,6 +122,10 @@ func getStatus(z *zpool) {
 }
 
 func main() {
+	err := checkExistance(zfsPool)
+	if err != nil {
+		log.Fatal(err)
+	}
 	z := zpool{name: zfsPool}
 	getStatus(&z)
 	fmt.Println(z)
