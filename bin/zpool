@@ -6,7 +6,7 @@
 # your PATH, then you should have a zpool command on your dev machine
 #
 
-e=$(ssh root@${ZFSHOST} zpool $@)
+e=$(ssh -q root@${ZFSHOST} zpool $@)
 echo "$e"
 
 # Below line can be used to fake a degraded pool

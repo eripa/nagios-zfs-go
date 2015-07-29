@@ -73,7 +73,7 @@ func runZpoolCommand(args []string) string {
 }
 
 func main() {
-	z := zpool{name: "zones"}
+	z := zpool{name: "tank"}
 	output := runZpoolCommand([]string{"status", z.name})
 	err := getFaulted(&z, output)
 	if err != nil {
