@@ -71,10 +71,10 @@ func getFaulted(z *zpool, output string) (err error) {
 	z.status = strings.Split(lines[1], " ")[2]
 	if z.status == "ONLINE" {
 		z.faulted = 0 // assume ONLINE means no faulted/unavailable providers
-	} else if z.status == "DEGRADED" {
+	} else if z.status == "DEGRADED" || z.status == "FAULTED" {
 		var count int64
 		for _, line := range lines {
-			if strings.Contains(line, "FAULTED") || strings.Contains(line, "UNAVAIL") {
+			if (strings.Contains(line, "FAULTED") && !strings.Contains(line, "state:")) || strings.Contains(line, "UNAVAIL") {
 				count = count + 1
 			}
 		}
