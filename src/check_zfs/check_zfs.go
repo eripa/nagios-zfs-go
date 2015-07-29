@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"log"
 	"os/exec"
@@ -10,8 +11,30 @@ import (
 )
 
 const (
-	VERSION = "0.0.2"
+	VERSION = "0.0.3"
 )
+
+var zfsPool string
+var capWarning int
+var capCritical int
+
+func init() {
+	const (
+		defaultPool     = "tank"
+		poolUsage       = "what ZFS pool to check"
+		defaultWarning  = 70
+		warningUsage    = "Capacity warning limit"
+		defaultCritical = 80
+		criticalUsage   = "Capacity critical limit (80% is considered soft limit of ZFS)"
+	)
+	flag.StringVar(&zfsPool, "pool", defaultPool, poolUsage)
+	flag.StringVar(&zfsPool, "p", defaultPool, poolUsage+" (shorthand)")
+	flag.IntVar(&capWarning, "warning", defaultWarning, warningUsage)
+	flag.IntVar(&capWarning, "w", defaultWarning, warningUsage+" (shorthand)")
+	flag.IntVar(&capCritical, "critical", defaultCritical, criticalUsage)
+	flag.IntVar(&capCritical, "c", defaultCritical, criticalUsage+" (shorthand)")
+	flag.Parse()
+}
 
 type zpool struct {
 	name     string
@@ -72,24 +95,26 @@ func runZpoolCommand(args []string) string {
 	return fmt.Sprintf("%s", out)
 }
 
-func main() {
-	z := zpool{name: "tank"}
+func getStatus(z *zpool) {
 	output := runZpoolCommand([]string{"status", z.name})
-	err := getFaulted(&z, output)
+	err := getFaulted(z, output)
 	if err != nil {
 		log.Fatal("Error parsing zpool status")
 	}
-
 	output = runZpoolCommand([]string{"list", "-H", "-o", "health", z.name})
-	err = checkHealth(&z, output)
+	err = checkHealth(z, output)
 	if err != nil {
 		log.Fatal("Error parsing zpool list -H -o health ", z.name)
 	}
-
 	output = runZpoolCommand([]string{"list", "-H", "-o", "cap", z.name})
-	err = getCapacity(&z, output)
+	err = getCapacity(z, output)
 	if err != nil {
 		log.Fatal("Error parsing zpool capacity")
 	}
+}
+
+func main() {
+	z := zpool{name: zfsPool}
+	getStatus(&z)
 	fmt.Println(z)
 }
