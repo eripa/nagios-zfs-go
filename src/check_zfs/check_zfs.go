@@ -15,8 +15,8 @@ const (
 )
 
 var zfsPool string
-var capWarning int
-var capCritical int
+var capWarning int64
+var capCritical int64
 
 func init() {
 	const (
@@ -29,10 +29,10 @@ func init() {
 	)
 	flag.StringVar(&zfsPool, "pool", defaultPool, poolUsage)
 	flag.StringVar(&zfsPool, "p", defaultPool, poolUsage+" (shorthand)")
-	flag.IntVar(&capWarning, "warning", defaultWarning, warningUsage)
-	flag.IntVar(&capWarning, "w", defaultWarning, warningUsage+" (shorthand)")
-	flag.IntVar(&capCritical, "critical", defaultCritical, criticalUsage)
-	flag.IntVar(&capCritical, "c", defaultCritical, criticalUsage+" (shorthand)")
+	flag.Int64Var(&capWarning, "warning", defaultWarning, warningUsage)
+	flag.Int64Var(&capWarning, "w", defaultWarning, warningUsage+" (shorthand)")
+	flag.Int64Var(&capCritical, "critical", defaultCritical, criticalUsage)
+	flag.Int64Var(&capCritical, "c", defaultCritical, criticalUsage+" (shorthand)")
 	flag.Parse()
 }
 
@@ -40,6 +40,7 @@ type zpool struct {
 	name     string
 	capacity int64
 	healthy  bool
+	status   string
 	faulted  int64
 }
 
@@ -67,10 +68,10 @@ func getCapacity(z *zpool, output string) (err error) {
 
 func getFaulted(z *zpool, output string) (err error) {
 	lines := strings.Split(output, "\n")
-	status := strings.Split(lines[1], " ")[2]
-	if status == "ONLINE" {
+	z.status = strings.Split(lines[1], " ")[2]
+	if z.status == "ONLINE" {
 		z.faulted = 0 // assume ONLINE means no faulted/unavailable providers
-	} else if status == "DEGRADED" {
+	} else if z.status == "DEGRADED" {
 		var count int64
 		for _, line := range lines {
 			if strings.Contains(line, "FAULTED") || strings.Contains(line, "UNAVAIL") {
