@@ -29,7 +29,7 @@ config:
 errors: No known data errors`)
 
 	message, exitcode := z.NagiosFormat()
-	if message != "OK: tank ONLINE, capacity: 51%\n" {
+	if message != "OK: tank ONLINE, capacity: 51%" {
 		t.Errorf("Unexpected Nagios status. Got: %s", message)
 	}
 	if exitcode != 0 {
@@ -61,7 +61,7 @@ func TestNagiosWarningCap(t *testing.T) {
 
 	errors: No known data errors`)
 	message, exitcode := z.NagiosFormat()
-	if message != "WARNING: tank ONLINE, capacity: 78%\n" {
+	if message != "WARNING: tank ONLINE, capacity: 78%" {
 		t.Errorf("Unexpected Nagios status. Got: %s", message)
 	}
 	if exitcode != 1 {
@@ -94,7 +94,7 @@ func TestNagiosCriticalCap(t *testing.T) {
 
 	errors: No known data errors`)
 	message, exitcode := z.NagiosFormat()
-	if message != "CRITICAL: tank ONLINE, capacity: 88%\n" {
+	if message != "CRITICAL: tank ONLINE, capacity: 88%" {
 		t.Errorf("Unexpected Nagios status. Got: %s", message)
 	}
 	if exitcode != 2 {
@@ -127,7 +127,7 @@ func TestNagiosCriticalDegraded(t *testing.T) {
 
 	errors: No known data errors`)
 	message, exitcode := z.NagiosFormat()
-	if message != "CRITICAL: tank DEGRADED, capacity: 32%, faulted: 2\n" {
+	if message != "CRITICAL: tank DEGRADED, capacity: 32%, faulted: 2" {
 		t.Errorf("Unexpected Nagios status. Got: %s", message)
 	}
 	if exitcode != 2 {
@@ -159,7 +159,7 @@ func TestNagiosCriticalFaulted(t *testing.T) {
 
 	errors: No known data errors`)
 	message, exitcode := z.NagiosFormat()
-	if message != "CRITICAL: tank FAULTED, capacity: 43%, faulted: 3\n" {
+	if message != "CRITICAL: tank FAULTED, capacity: 43%, faulted: 3" {
 		t.Errorf("Unexpected Nagios status. Got: %s", message)
 	}
 	if exitcode != 2 {
