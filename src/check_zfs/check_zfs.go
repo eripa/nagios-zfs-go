@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -129,5 +130,7 @@ func main() {
 	}
 	z := zpool{name: zfsPool}
 	getStatus(&z)
-	fmt.Println(z)
+	message, exitcode := z.NagiosFormat()
+	fmt.Println(message)
+	os.Exit(exitcode)
 }
