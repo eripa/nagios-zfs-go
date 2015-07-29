@@ -12,12 +12,13 @@ import (
 )
 
 const (
-	VERSION = "0.0.3"
+	VERSION = "0.1"
 )
 
 var zfsPool string
 var capWarning int64
 var capCritical int64
+var versionCheck bool
 
 func init() {
 	const (
@@ -27,6 +28,7 @@ func init() {
 		warningUsage    = "Capacity warning limit"
 		defaultCritical = 80
 		criticalUsage   = "Capacity critical limit (80% is considered soft limit of ZFS)"
+		versionUsage    = "Display current version"
 	)
 	flag.StringVar(&zfsPool, "pool", defaultPool, poolUsage)
 	flag.StringVar(&zfsPool, "p", defaultPool, poolUsage+" (shorthand)")
@@ -34,6 +36,7 @@ func init() {
 	flag.Int64Var(&capWarning, "w", defaultWarning, warningUsage+" (shorthand)")
 	flag.Int64Var(&capCritical, "critical", defaultCritical, criticalUsage)
 	flag.Int64Var(&capCritical, "c", defaultCritical, criticalUsage+" (shorthand)")
+	flag.BoolVar(&versionCheck, "version", false, versionUsage)
 	flag.Parse()
 }
 
@@ -124,6 +127,10 @@ func getStatus(z *zpool) {
 }
 
 func main() {
+	if versionCheck {
+		fmt.Printf("nagios-zfs-go v%s (https://github.com/eripa/nagios-zfs-go)\n", VERSION)
+		os.Exit(0)
+	}
 	err := checkExistance(zfsPool)
 	if err != nil {
 		log.Fatal(err)
