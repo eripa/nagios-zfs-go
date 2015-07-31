@@ -48,7 +48,7 @@ type zpool struct {
 	faulted  int64
 }
 
-func checkHealth(z *zpool, output string) (err error) {
+func (z *zpool) checkHealth(output string) (err error) {
 	output = strings.Trim(output, "\n")
 	if output == "ONLINE" {
 		z.healthy = true
@@ -61,7 +61,7 @@ func checkHealth(z *zpool, output string) (err error) {
 	return err
 }
 
-func getCapacity(z *zpool, output string) (err error) {
+func (z *zpool) getCapacity(output string) (err error) {
 	s := strings.Split(output, "%")[0]
 	z.capacity, err = strconv.ParseInt(s, 0, 8)
 	if err != nil {
@@ -70,7 +70,7 @@ func getCapacity(z *zpool, output string) (err error) {
 	return err
 }
 
-func getFaulted(z *zpool, output string) (err error) {
+func (z *zpool) getFaulted(output string) (err error) {
 	lines := strings.Split(output, "\n")
 	z.status = strings.Split(lines[1], " ")[2]
 	if z.status == "ONLINE" {
@@ -88,6 +88,24 @@ func getFaulted(z *zpool, output string) (err error) {
 		err = errors.New("Error parsing faulted/unavailable disks")
 	}
 	return
+}
+
+func (z *zpool) getStatus() {
+	output := runZpoolCommand([]string{"status", z.name})
+	err := z.getFaulted(output)
+	if err != nil {
+		log.Fatal("Error parsing zpool status")
+	}
+	output = runZpoolCommand([]string{"list", "-H", "-o", "health", z.name})
+	err = z.checkHealth(output)
+	if err != nil {
+		log.Fatal("Error parsing zpool list -H -o health ", z.name)
+	}
+	output = runZpoolCommand([]string{"list", "-H", "-o", "cap", z.name})
+	err = z.getCapacity(output)
+	if err != nil {
+		log.Fatal("Error parsing zpool capacity")
+	}
 }
 
 func checkExistance(pool string) (err error) {
@@ -108,24 +126,6 @@ func runZpoolCommand(args []string) string {
 	return fmt.Sprintf("%s", out)
 }
 
-func getStatus(z *zpool) {
-	output := runZpoolCommand([]string{"status", z.name})
-	err := getFaulted(z, output)
-	if err != nil {
-		log.Fatal("Error parsing zpool status")
-	}
-	output = runZpoolCommand([]string{"list", "-H", "-o", "health", z.name})
-	err = checkHealth(z, output)
-	if err != nil {
-		log.Fatal("Error parsing zpool list -H -o health ", z.name)
-	}
-	output = runZpoolCommand([]string{"list", "-H", "-o", "cap", z.name})
-	err = getCapacity(z, output)
-	if err != nil {
-		log.Fatal("Error parsing zpool capacity")
-	}
-}
-
 func main() {
 	if versionCheck {
 		fmt.Printf("nagios-zfs-go v%s (https://github.com/eripa/nagios-zfs-go)\n", VERSION)
@@ -136,7 +136,7 @@ func main() {
 		log.Fatal(err)
 	}
 	z := zpool{name: zfsPool}
-	getStatus(&z)
+	z.getStatus()
 	message, exitcode := z.NagiosFormat()
 	fmt.Println(message)
 	os.Exit(exitcode)

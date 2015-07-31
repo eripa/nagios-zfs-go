@@ -8,7 +8,7 @@ func TestCheckHealth(t *testing.T) {
 	z := zpool{name: "tank"}
 
 	// Test ONLINE
-	err := checkHealth(&z, "ONLINE")
+	err := z.checkHealth("ONLINE")
 
 	if err != nil {
 		t.Errorf("Error in checkHealth (%s)", err)
@@ -18,7 +18,7 @@ func TestCheckHealth(t *testing.T) {
 	}
 
 	// Test FAULED
-	err = checkHealth(&z, "FAULTED")
+	err = z.checkHealth("FAULTED")
 	if err != nil {
 		t.Errorf("Error in checkHealth (%s)", err)
 	}
@@ -27,7 +27,7 @@ func TestCheckHealth(t *testing.T) {
 	}
 
 	// Test DEGRADED
-	err = checkHealth(&z, "DEGRADED")
+	err = z.checkHealth("DEGRADED")
 	if err != nil {
 		t.Errorf("Error in checkHealth (%s)", err)
 	}
@@ -36,7 +36,7 @@ func TestCheckHealth(t *testing.T) {
 	}
 
 	// Test other
-	err = checkHealth(&z, "other status")
+	err = z.checkHealth("other status")
 	if err == nil {
 		t.Errorf("other status should throw error in checkHealth (%s)", err)
 	}
@@ -49,7 +49,7 @@ func TestGetCapacity(t *testing.T) {
 	z := zpool{name: "tank"}
 
 	// Test average capacity
-	err := getCapacity(&z, "51%")
+	err := z.getCapacity("51%")
 
 	if err != nil {
 		t.Errorf("Error in getCapacity")
@@ -59,7 +59,7 @@ func TestGetCapacity(t *testing.T) {
 	}
 
 	// Test non-integer
-	err = getCapacity(&z, "foo")
+	err = z.getCapacity("foo")
 
 	if err == nil {
 		t.Errorf("Non-integer should produce error in getCapacity")
@@ -73,7 +73,7 @@ func TestGetFaulted(t *testing.T) {
 	}
 
 	// Test all ONLINE
-	err := getFaulted(&z, `  pool: tank
+	err := z.getFaulted(`  pool: tank
  state: ONLINE
   scan: scrub repaired 0 in 1h1m with 0 errors on Thu Jan 1 13:37:00 1970
 config:
@@ -97,7 +97,7 @@ errors: No known data errors`)
 	}
 
 	// Test degraded state
-	err = getFaulted(&z, `  pool: tank
+	err = z.getFaulted(`  pool: tank
 	 state: DEGRADED
 	  scan: scrub repaired 0 in 1h1m with 0 errors on Thu Jan 1 13:37:00 1970
 	config:
@@ -121,7 +121,7 @@ errors: No known data errors`)
 	}
 
 	// Test other output
-	err = getFaulted(&z, `  pool: tank
+	err = z.getFaulted(`  pool: tank
 	 state: Oother`)
 	if err == nil {
 		t.Errorf("Should produce parsing error in getFaulted")

@@ -9,9 +9,9 @@ func TestNagiosOK(t *testing.T) {
 	}
 
 	// Test all ONLINE
-	checkHealth(&z, "ONLINE")
-	getCapacity(&z, "51%")
-	getFaulted(&z, `  pool: tank
+	z.checkHealth("ONLINE")
+	z.getCapacity("51%")
+	z.getFaulted(`  pool: tank
  state: ONLINE
   scan: scrub repaired 0 in 1h1m with 0 errors on Thu Jan 1 13:37:00 1970
 config:
@@ -42,9 +42,9 @@ func TestNagiosWarningCap(t *testing.T) {
 		name:    "tank",
 		faulted: -1, // set to -1 to make sure we actually test the all-ONLINE case
 	}
-	checkHealth(&z, "ONLINE")
-	getCapacity(&z, "78%")
-	getFaulted(&z, `  pool: tank
+	z.checkHealth("ONLINE")
+	z.getCapacity("78%")
+	z.getFaulted(`  pool: tank
 	 state: ONLINE
 	  scan: scrub repaired 0 in 1h1m with 0 errors on Thu Jan 1 13:37:00 1970
 	config:
@@ -75,9 +75,9 @@ func TestNagiosCriticalCap(t *testing.T) {
 		name:    "tank",
 		faulted: -1, // set to -1 to make sure we actually test the all-ONLINE case
 	}
-	checkHealth(&z, "ONLINE")
-	getCapacity(&z, "88%")
-	getFaulted(&z, `  pool: tank
+	z.checkHealth("ONLINE")
+	z.getCapacity("88%")
+	z.getFaulted(`  pool: tank
 	 state: ONLINE
 	  scan: scrub repaired 0 in 1h1m with 0 errors on Thu Jan 1 13:37:00 1970
 	config:
@@ -108,9 +108,9 @@ func TestNagiosCriticalDegraded(t *testing.T) {
 		name:    "tank",
 		faulted: -1, // set to -1 to make sure we actually test the all-ONLINE case
 	}
-	checkHealth(&z, "DEGRADED")
-	getCapacity(&z, "32%")
-	getFaulted(&z, `  pool: tank
+	z.checkHealth("DEGRADED")
+	z.getCapacity("32%")
+	z.getFaulted(`  pool: tank
 	 state: DEGRADED
 	  scan: scrub repaired 0 in 1h1m with 0 errors on Thu Jan 1 13:37:00 1970
 	config:
@@ -140,9 +140,9 @@ func TestNagiosCriticalFaulted(t *testing.T) {
 		name:    "tank",
 		faulted: -1, // set to -1 to make sure we actually test the all-ONLINE case
 	}
-	checkHealth(&z, "FAULTED")
-	getCapacity(&z, "43%")
-	getFaulted(&z, `  pool: tank
+	z.checkHealth("FAULTED")
+	z.getCapacity("43%")
+	z.getFaulted(`  pool: tank
 	 state: FAULTED
 	  scan: scrub repaired 0 in 1h1m with 0 errors on Thu Jan 1 13:37:00 1970
 	config:
