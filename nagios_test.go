@@ -1,6 +1,9 @@
 package main
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestNagiosOK(t *testing.T) {
 	z := zpool{
@@ -164,5 +167,69 @@ func TestNagiosCriticalFaulted(t *testing.T) {
 	}
 	if exitcode != 2 {
 		t.Errorf("Unexpected Exit code, got %d, should be 2", exitcode)
+	}
+}
+
+func TestNagiosOutput(t *testing.T) {
+	nagiosStatus := map[string]int{
+		"OK:":       0,
+		"WARNING:":  1,
+		"CRITICAL:": 2,
+		"UNKNOWN:":  3,
+	}
+	pools := map[string]zpool{
+		"OK: tank ONLINE, capacity: 43%": {
+			name:     "tank",
+			faulted:  0,
+			capacity: 43,
+			healthy:  true,
+			status:   "ONLINE",
+		},
+		"WARNING: zones ONLINE, capacity: 78%": {
+			name:     "zones",
+			faulted:  0,
+			capacity: 78,
+			healthy:  true,
+			status:   "ONLINE",
+		},
+		"CRITICAL: tank ONLINE, capacity: 83%": {
+			name:     "tank",
+			faulted:  0,
+			capacity: 83,
+			healthy:  true,
+			status:   "ONLINE",
+		},
+		"CRITICAL: tank DEGRADED, capacity: 43%, faulted: 1": {
+			name:     "tank",
+			faulted:  1,
+			capacity: 43,
+			healthy:  false,
+			status:   "DEGRADED",
+		},
+		"CRITICAL: tank FAULTED, capacity: 13%, faulted: 2": {
+			name:     "tank",
+			faulted:  2,
+			capacity: 13,
+			healthy:  false,
+			status:   "FAULTED",
+		},
+		"UNKNOWN: zones OTHERSTATE, capacity: -1%, faulted: 1": {
+			name:     "zones",
+			faulted:  1,
+			capacity: -1,
+			healthy:  true,
+			status:   "OTHERSTATE",
+		},
+	}
+
+	for status, pool := range pools {
+		message, exitcode := pool.NagiosFormat()
+		if message != status {
+			t.Errorf("Unexpected Nagios status. Got: '%s', should be: '%s'", message, status)
+		}
+		s := strings.Fields(message)[0]
+		if exitcode != nagiosStatus[s] {
+			t.Errorf("Unexpected Exit code, got %d, should be %d", exitcode, nagiosStatus[s])
+		}
 	}
 }
