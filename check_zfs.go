@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	VERSION = "0.1.1"
+	toolVersion = "0.1.1"
 )
 
 var zfsPool string
@@ -117,18 +117,18 @@ func checkExistance(pool string) (err error) {
 }
 
 func runZpoolCommand(args []string) string {
-	zpool_path, err := exec.LookPath("zpool")
+	zpoolPath, err := exec.LookPath("zpool")
 	if err != nil {
 		log.Fatal("Could not find zpool in PATH")
 	}
-	cmd := exec.Command(zpool_path, args...)
+	cmd := exec.Command(zpoolPath, args...)
 	out, _ := cmd.CombinedOutput()
 	return fmt.Sprintf("%s", out)
 }
 
 func main() {
 	if versionCheck {
-		fmt.Printf("nagios-zfs-go v%s (https://github.com/eripa/nagios-zfs-go)\n", VERSION)
+		fmt.Printf("nagios-zfs-go v%s (https://github.com/eripa/nagios-zfs-go)\n", toolVersion)
 		os.Exit(0)
 	}
 	err := checkExistance(zfsPool)
