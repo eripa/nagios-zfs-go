@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	toolVersion = "0.1.1"
+	toolVersion = "0.1.2"
 )
 
 var zfsPool string
