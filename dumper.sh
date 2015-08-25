@@ -4,7 +4,7 @@
 # and dump them to temporary files. These files will the be read by nagios-zfs-go
 #
 # This will enable nagios-zfs-go to be run without root privileges, which isn't really
-# a sound thing to do for a network service.
+# a sound thing to do for a network exposed service.
 #
 # A very simple example cron job:
 #
@@ -24,11 +24,11 @@ writeStatusFile() {
     COMMAND="$3"
     zpool $COMMAND "$POOL" > "${DUMP_LOCATION%/}/check_zfs_${POOL}_${FILENAME}.$$" 2> /dev/null
     if [ "$?" -eq 0 ] ; then
-        # Atomically update the status file
+        # Atomically update the status file only on success
         mv "${DUMP_LOCATION%/}/check_zfs_${POOL}_${FILENAME}.$$" "${DUMP_LOCATION%/}/check_zfs_${POOL}_${FILENAME}"
     else
         echo >&2 "Error running $COMMAND"
-        rm -f "${DUMP_LOCATION%/}/check_zfs_${POOL}_${FILENAME}.$$" # Clean up
+        rm -f "${DUMP_LOCATION%/}/check_zfs_${POOL}_${FILENAME}.$$" # Clean up the possibly broken output file
         exit 1
     fi
 }
