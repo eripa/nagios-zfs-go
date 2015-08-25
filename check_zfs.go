@@ -4,21 +4,23 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
-	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
 
 const (
-	toolVersion = "0.1.2"
+	toolVersion = "0.2.0"
 )
 
 var zfsPool string
 var capWarning int64
 var capCritical int64
 var versionCheck bool
+var dumpDirectory string
 
 func init() {
 	const (
@@ -36,6 +38,7 @@ func init() {
 	flag.Int64Var(&capWarning, "w", defaultWarning, warningUsage+" (shorthand)")
 	flag.Int64Var(&capCritical, "critical", defaultCritical, criticalUsage)
 	flag.Int64Var(&capCritical, "c", defaultCritical, criticalUsage+" (shorthand)")
+	flag.StringVar(&dumpDirectory, "statusdir", "/tmp", "Where to look for status dumps (see separate dumper.sh script)")
 	flag.BoolVar(&versionCheck, "version", false, versionUsage)
 	flag.Parse()
 }
@@ -49,10 +52,10 @@ type zpool struct {
 }
 
 func (z *zpool) checkHealth(output string) (err error) {
-	output = strings.Trim(output, "\n")
-	if output == "ONLINE" {
+	health := strings.Trim(output, "\n")
+	if health == "ONLINE" {
 		z.healthy = true
-	} else if output == "DEGRADED" || output == "FAULTED" {
+	} else if health == "DEGRADED" || health == "FAULTED" {
 		z.healthy = false
 	} else {
 		z.healthy = false // just to make sure
@@ -91,49 +94,40 @@ func (z *zpool) getFaulted(output string) (err error) {
 }
 
 func (z *zpool) getStatus() {
-	output := runZpoolCommand([]string{"status", z.name})
-	err := z.getFaulted(output)
+	basePath := filepath.Join(dumpDirectory, "check_zfs_"+z.name)
+	data, err := ioutil.ReadFile(basePath + "_status")
+	if err != nil {
+		log.Printf("Error: Have you dumped status files to %s with dumper.sh?\n", dumpDirectory)
+		log.Fatal(err)
+	}
+	err = z.getFaulted(fmt.Sprintf("%s", data))
 	if err != nil {
 		log.Fatal("Error parsing zpool status")
 	}
-	output = runZpoolCommand([]string{"list", "-H", "-o", "health", z.name})
-	err = z.checkHealth(output)
+	data, err = ioutil.ReadFile(basePath + "_health")
 	if err != nil {
-		log.Fatal("Error parsing zpool list -H -o health ", z.name)
+		log.Printf("Error: Have you dumped status (health) files to %s with dumper.sh?\n", dumpDirectory)
+		log.Fatal(err)
 	}
-	output = runZpoolCommand([]string{"list", "-H", "-o", "cap", z.name})
-	err = z.getCapacity(output)
+	err = z.checkHealth(fmt.Sprintf("%s", data))
+	if err != nil {
+		log.Fatal("Error parsing zpool health")
+	}
+	data, err = ioutil.ReadFile(basePath + "_capacity")
+	if err != nil {
+		log.Printf("Error: Have you dumped status (capacity) files to %s with dumper.sh?\n", dumpDirectory)
+		log.Fatal(err)
+	}
+	err = z.getCapacity(fmt.Sprintf("%s", data))
 	if err != nil {
 		log.Fatal("Error parsing zpool capacity")
 	}
-}
-
-func checkExistance(pool string) (err error) {
-	output := runZpoolCommand([]string{"list", pool})
-	if strings.Contains(fmt.Sprintf("%s", output), "no such pool") {
-		err = errors.New("No such pool")
-	}
-	return
-}
-
-func runZpoolCommand(args []string) string {
-	zpoolPath, err := exec.LookPath("zpool")
-	if err != nil {
-		log.Fatal("Could not find zpool in PATH")
-	}
-	cmd := exec.Command(zpoolPath, args...)
-	out, _ := cmd.CombinedOutput()
-	return fmt.Sprintf("%s", out)
 }
 
 func main() {
 	if versionCheck {
 		fmt.Printf("nagios-zfs-go v%s (https://github.com/eripa/nagios-zfs-go)\n", toolVersion)
 		os.Exit(0)
-	}
-	err := checkExistance(zfsPool)
-	if err != nil {
-		log.Fatal(err)
 	}
 	z := zpool{name: zfsPool}
 	z.getStatus()
