@@ -16,8 +16,8 @@ declare -a TARGETS=(darwin linux solaris freebsd)
 for target in ${TARGETS[@]} ; do
   output="check_zfs-${target}"
   echo "Building for ${target}, output bin/${output}"
-  GOOS=${target}
-  GOARCH=amd64
+  export GOOS=${target}
+  export GOARCH=amd64
   go build -o bin/${output}
 done
 
