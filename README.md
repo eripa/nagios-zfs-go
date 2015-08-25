@@ -28,6 +28,20 @@ Tested on:
 
 ## Example run
 
+In order to separate privileges and avoid root requirement for check_zfs, the check is split into two steps.
+
+### First, dump data using root privileges and the dumper script
+
+    $ bin/check_zfs_dumper.sh
+
+This will create simple text files with status in /tmp (change script if desired). These files will later on be parsed by check_zfs.
+
+This script would presumably be run by crontab every minute or so. Example crontab entry:
+
+    *  *  * *  *  /root/scripts/nagios-zfs-go/dumper.sh
+
+### Next, run the check_zfs command
+
 A typical example for SmartOS "zones" pool:
 
     $ bin/check_zfs -p zones -w 70 -c 78
