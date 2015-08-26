@@ -22,13 +22,15 @@ writeStatusFile() {
     POOL="$1"
     FILENAME="$2"
     COMMAND="$3"
-    zpool $COMMAND "$POOL" > "${DUMP_LOCATION%/}/check_zfs_${POOL}_${FILENAME}.$$" 2> /dev/null
+    OUTPUT="${DUMP_LOCATION%/}/check_zfs_${POOL}_${FILENAME}"
+
+    zpool $COMMAND "$POOL" > "${OUTPUT}.$$" 2> /dev/null
     if [ "$?" -eq 0 ] ; then
         # Atomically update the status file only on success
-        mv "${DUMP_LOCATION%/}/check_zfs_${POOL}_${FILENAME}.$$" "${DUMP_LOCATION%/}/check_zfs_${POOL}_${FILENAME}"
+        mv "${OUTPUT}.$$" "${OUTPUT}"
     else
-        echo >&2 "Error running $COMMAND"
-        rm -f "${DUMP_LOCATION%/}/check_zfs_${POOL}_${FILENAME}.$$" # Clean up the possibly broken output file
+        echo >&2 "Error while running: zpool $COMMAND $POOL"
+        rm -f "${OUTPUT}.$$" # Clean up the possibly broken output file
         exit 1
     fi
 }
